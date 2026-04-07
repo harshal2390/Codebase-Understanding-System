@@ -1,0 +1,89 @@
+# ----------------------
+# Python
+# ----------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+
+# Virtual Environment (VERY IMPORTANT)
+venv/
+.env/
+.env.*
+
+# ----------------------
+# Data (Large / Generated)
+# ----------------------
+data/parsed/
+data/repos/
+graph_db/
+vector_db/
+
+# If you want to keep structure but not files:
+# !data/.gitkeep
+
+# ----------------------
+# Logs & temp
+# ----------------------
+*.log
+*.tmp
+*.cache
+
+/.pyc
+# ----------------------
+# Jupyter / ML
+# ----------------------
+.ipynb_checkpoints/
+
+# ----------------------
+# OS files
+# ----------------------
+.DS_Store
+Thumbs.db
+
+# ----------------------
+# VS Code / IDE
+# ----------------------
+.vscode/
+.idea/
+
+# ----------------------
+# Node (inside repos folder like express/Wanderlust)
+# ----------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ----------------------
+# Environment variables
+# ----------------------
+.env
+.env.local
+.env.development
+.env.production
+
+# ----------------------
+# HuggingFace / Model Cache (optional but recommended)
+# ----------------------
+.cache/
+huggingface/
+hf_home/
+
+# ----------------------
+# FAISS / Vector embeddings (large files)
+# ----------------------
+*.faiss
+*.index
+*.bin
+
+# ----------------------
+# Misc
+# ----------------------
+*.sqlite3
+*.db
