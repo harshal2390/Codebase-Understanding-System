@@ -45,13 +45,44 @@ class DependencyGraph:
 
             # Add imports (file-level dependency)
             for imp in item["imports"]:
-                self.graph.add_edge(file_path, imp, relation="imports")
+                # Only consider local imports (relative paths)
+                if imp.startswith("."):
+                    normalized = os.path.normpath(os.path.join(os.path.dirname(file_path), imp))
+
+                    # Add node if not exists
+                    self.graph.add_node(normalized, type="file")
+
+                    self.graph.add_edge(file_path, normalized, relation="imports")
+
 
     def get_neighbors(self, node):
         """
         Get connected nodes
         """
         return list(self.graph.neighbors(node))
+    
+    def trace_flow(self, start_node, depth=2):
+        """
+        Traverse graph to get flow
+        """
+        visited = set()
+        flow = []
+
+        def dfs(node, current_depth):
+            if current_depth > depth or node in visited:
+                return
+
+            visited.add(node)
+            flow.append(node)
+
+            neighbors = [n for n in self.graph.neighbors(node) if self.graph.edges[node, n].get("relation") == "imports"]
+
+            for neighbor in neighbors:
+                dfs(neighbor, current_depth + 1)
+
+        dfs(start_node, 0)
+
+        return flow
 
     def print_summary(self):
         print(f"Total Nodes: {self.graph.number_of_nodes()}")

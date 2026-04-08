@@ -11,33 +11,60 @@ class LLMGenerator:
 
     def generate(self, query, context):
         prompt = f"""
-        You are a senior software engineer analyzing a codebase.
+        You are a senior software engineer analyzing a real-world codebase.
 
-        STRICT RULES:
-        1. Answer ONLY from the provided context
-        2. DO NOT make assumptions
-        3. DO NOT invent file names
-        4. If information is missing, say "Not enough information"
-        5. ONLY use given file paths
+        Your job is to explain how the system works using ONLY the provided context.
 
-        CONTEXT:
+        =========================
+        STRICT RULES (VERY IMPORTANT)
+        =========================
+        1. DO NOT make assumptions
+        2. DO NOT invent files or logic
+        3. ONLY use the provided context
+        4. If something is missing → say "Not enough information"
+        5. Always reference actual file paths
+        6. Prefer step-by-step explanation of flow
+        7.Use FLOW TRACE section to explain step-by-step execution
+
+        =========================
+        CONTEXT
+        =========================
         {context}
 
-        QUESTION:
+        =========================
+        QUESTION
+        =========================
         {query}
 
-        OUTPUT FORMAT:
+        =========================
+        OUTPUT FORMAT (FOLLOW STRICTLY)
+        =========================
 
-        Explanation:
-        - Explain ONLY what is present in code
+        🔹 Explanation:
+        - High-level explanation of feature
 
-        Relevant Files:
-        - list ONLY files from context
+        🔹 Flow (Step-by-step):
+        1. Where request starts
+        2. Which route/controller handles it
+        3. What logic is applied
+        4. How data flows
+        5. Final result
 
-        Code Snippets:
-        - exact snippets from context
+        🔹 Relevant Files:
+        - file_path → what it does
 
-        Final Answer:
+        🔹 Code Snippets:
+        - show ONLY important parts (short snippets)
+
+        🔹 Final Answer:
+        - concise summary in 2-3 lines
+
+        =========================
+        IMPORTANT NOTES
+        =========================
+        - Focus on FLOW, not just description
+        - Connect files logically
+        - Explain like teaching a developer
         """
 
         response = self.client.chat.completions.create(

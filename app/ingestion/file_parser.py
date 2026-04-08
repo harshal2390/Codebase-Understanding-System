@@ -130,7 +130,6 @@ class FileParser:
         """
         all_files = self.get_all_files()
         parsed_data = []
-
         for file_path in all_files:
 
             if file_path.endswith(".py"):
