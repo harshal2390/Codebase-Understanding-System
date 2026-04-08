@@ -3,11 +3,15 @@ import numpy as np
 import os
 import pickle
 
+
 class VectorStore:
     def __init__(self, dim: int):
         self.dim = dim
+
+        # FAISS index
         self.index = faiss.IndexFlatL2(dim)
 
+        # Stored data
         self.texts = []
         self.metadata = []
 
@@ -17,49 +21,69 @@ class VectorStore:
     def add_embeddings(self, embeddings, texts, metadatas):
         embeddings = np.array(embeddings).astype("float32")
 
+        if len(embeddings) == 0:
+            print("[WARNING] No embeddings to add")
+            return
+
         self.index.add(embeddings)
 
         self.texts.extend(texts)
         self.metadata.extend(metadatas)
 
     # =========================
-    # SAVE / LOAD
+    # SAVE (PER REPO ✅)
     # =========================
-    def save(self, path="vector_db/index.faiss"):
+    def save(self, repo_name):
         os.makedirs("vector_db", exist_ok=True)
 
+        index_path = f"vector_db/{repo_name}.faiss"
+        store_path = f"vector_db/{repo_name}_store.pkl"
+
         # Save FAISS index
-        faiss.write_index(self.index, path)
+        faiss.write_index(self.index, index_path)
 
         # Save metadata + texts
-        with open("vector_db/store.pkl", "wb") as f:
+        with open(store_path, "wb") as f:
             pickle.dump({
                 "texts": self.texts,
                 "metadata": self.metadata
             }, f)
 
+        print(f"[INFO] Saved FAISS index for repo: {repo_name}")
 
-    def load(self, path="vector_db/index.faiss"):
-        if os.path.exists(path):
-            self.index = faiss.read_index(path)
+    # =========================
+    # LOAD (PER REPO ✅)
+    # =========================
+    def load(self, repo_name):
+        index_path = f"vector_db/{repo_name}.faiss"
+        store_path = f"vector_db/{repo_name}_store.pkl"
 
-            # Load metadata + texts
-            try:
-                with open("vector_db/store.pkl", "rb") as f:
-                    data = pickle.load(f)
-                    self.texts = data["texts"]
-                    self.metadata = data["metadata"]
-            except:
-                print("[WARNING] Metadata not found, rebuilding required")
-                return False
+        if not os.path.exists(index_path):
+            return False
 
-            return True
+        # Load FAISS
+        self.index = faiss.read_index(index_path)
 
-        return False
+        # Load metadata
+        if os.path.exists(store_path):
+            with open(store_path, "rb") as f:
+                data = pickle.load(f)
+                self.texts = data.get("texts", [])
+                self.metadata = data.get("metadata", [])
+        else:
+            print("[WARNING] Metadata missing, rebuilding needed")
+            return False
+
+        print(f"[INFO] Loaded FAISS index for repo: {repo_name}")
+        return True
+
     # =========================
     # SEMANTIC SEARCH
     # =========================
     def search(self, query_embedding, k=5):
+        if len(self.texts) == 0:
+            return []
+
         query_embedding = np.array([query_embedding]).astype("float32")
 
         distances, indices = self.index.search(query_embedding, k)
@@ -67,7 +91,7 @@ class VectorStore:
         results = []
 
         for idx in indices[0]:
-            if idx < len(self.texts):
+            if 0 <= idx < len(self.texts):
                 results.append({
                     "content": self.texts[idx],
                     "metadata": self.metadata[idx]
@@ -76,18 +100,31 @@ class VectorStore:
         return results
 
     # =========================
-    # KEYWORD SEARCH (NEW 🔥)
+    # KEYWORD SEARCH (IMPROVED 🔥)
     # =========================
     def keyword_search(self, query, k=3):
-        results = []
+        query_words = query.lower().split()
 
-        query_lower = query.lower()
+        scored = []
 
         for i, text in enumerate(self.texts):
-            if query_lower in text.lower():
-                results.append({
-                    "content": text,
-                    "metadata": self.metadata[i]
-                })
+            text_lower = text.lower()
 
-        return results[:k]
+            # score based on keyword matches
+            score = sum(1 for w in query_words if w in text_lower)
+
+            if score > 0:
+                scored.append((score, i))
+
+        # sort by score descending
+        scored.sort(reverse=True)
+
+        results = []
+
+        for _, idx in scored[:k]:
+            results.append({
+                "content": self.texts[idx],
+                "metadata": self.metadata[idx]
+            })
+
+        return results

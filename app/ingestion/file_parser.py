@@ -90,10 +90,18 @@ class FileParser:
 
             # Function patterns
             functions = re.findall(r'function\s+(\w+)', content)
+            
+            # Function call
+            function_calls = re.findall(r'(\w+)\(', content)
 
             # Arrow functions
             arrow_functions = re.findall(
                 r'const\s+(\w+)\s*=\s*\(.*?\)\s*=>', content
+            )
+            # Route handlers
+            route_handlers = re.findall(
+                r'router\.(get|post|put|delete)\(["\'](.+?)["\'],\s*(\w+)\.(\w+)',
+                content
             )
 
             # Classes
@@ -115,6 +123,8 @@ class FileParser:
                 "classes": list(set(classes)),
                 "imports": list(set(imports_require + imports_es6)),
                 "content": content,
+                "function_calls": list(set(function_calls)),
+                "route_handlers": route_handlers
             }
 
         except Exception as e:
